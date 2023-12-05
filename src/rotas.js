@@ -57,7 +57,6 @@ rotas.post(
   verificarNaoEnviadoQuery,
   verificarEnvioNome,
   verificarEnvioEmailSenha,
-  verificarExisteEmail,
   cadastrarUsuario
 );
 rotas.post(
