@@ -3,9 +3,14 @@ const knex = require("../banco/conexao");
 const jwt = require("jsonwebtoken");
 const senhaJwt = require("../senhaJwt");
 
+const verificarUsuarioExistente = async (email) => {
+  const usuario = await knex("usuarios").where("email", email).first();
+  return usuario;
+};
+
 const cadastrarUsuario = async (req, res) => {
   const { nome, email, senha } = req.body;
-  const usuarioExiste = req.usuarioExiste;
+  const usuarioExiste = await verificarUsuarioExistente(email);
 
   if (usuarioExiste) {
     return res.status(400).json({ mensagem: "Email já existe!" });
@@ -79,7 +84,7 @@ const infoUsuario = async (req, res) => {
 const atualizarUsuario = async (req, res) => {
   const { nome, email, senha } = req.body;
   const usuario_id = req.usuario;
-  const usuarioExiste = req.usuarioExiste;
+  const usuarioExiste = await verificarUsuarioExistente(email);
 
   if (usuarioExiste) {
     return res.status(400).json({ mensagem: "Email já existe!" });

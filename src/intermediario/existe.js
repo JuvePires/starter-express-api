@@ -1,10 +1,10 @@
 const knex = require("../banco/conexao");
 
-const verificarExisteEmail = async (req, res, next) => {
+const verificarExisteEmail = (tabela) => async (req, res, next) => {
   try {
     const { email } = req.body;
 
-    const usuario = await knex("usuarios").where("email", email).first();
+    const usuario = await knex(tabela).where("email", email).first();
 
     req.usuarioExiste = usuario;
 
@@ -13,6 +13,11 @@ const verificarExisteEmail = async (req, res, next) => {
     return res.status(400).json({ mensagem: "Erro ao validar email!" });
   }
 };
+
+const verificarExisteEmailUsuario = verificarExisteEmail("usuarios");
+
+const verificarExisteEmailCliente = verificarExisteEmail("clientes");
+
 
 const verificarExisteUsuarioId = async (req, res, next) => {
   try {
@@ -75,7 +80,8 @@ const verificarExisteCategoriaId = async (req, res, next) => {
 };
 
 module.exports = {
-  verificarExisteEmail,
+  verificarExisteEmailUsuario,
+  verificarExisteEmailCliente,
   // verificarExisteUsuarioId,
   verificarExisteTransicaoId,
   verificarExisteCategoriaId,

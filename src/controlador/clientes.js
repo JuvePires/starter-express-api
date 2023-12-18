@@ -1,31 +1,27 @@
 const knex = require("../banco/conexao");
+const {
+  verificarEmailExistente,
+  verificarCpfExistente,
+} = require("../validacoes/emailCPF");
 
 const cadastrarCliente = async (req, res) => {
   const { nome, email, cpf } = req.body;
 
-  console.log("Nome:", nome);
-  console.log("Email:", email);
-  console.log("CPF:", cpf);
-
-  if (!cpf) {
-    return res.status(404).json("O campo CPF é obrigatório");
-  }
-
   try {
-    const emailExiste = await knex("clientes").where({ email }).first();
+    const emailExiste = await verificarEmailExistente(email);
 
     if (emailExiste) {
-      return res.status(400).json("O email já existe");
+      return res.status(400).json({ mensagem: "O email já existe" });
     }
 
-    const cpfExiste = await knex("clientes").where({ cpf }).first();
+    const cpfExiste = await verificarCpfExistente(cpf);
 
     if (cpfExiste) {
-      return res.status(400).json("O cpf já existe");
+      return res.status(400).json({ mensagem: "O cpf já existe" });
     }
 
     const clienteInserido = await knex("clientes")
-      .returning(["nome", "email", "cpf"])
+      .returning(["id", "nome", "email", "cpf"])
       .insert({
         nome,
         email,
@@ -34,34 +30,26 @@ const cadastrarCliente = async (req, res) => {
 
     return res.status(201).json(clienteInserido[0]);
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ mensagem: "Erro interno do servidor" });
   }
 };
+
 const atualizarCliente = async (req, res) => {
   const { nome, email, cpf } = req.body;
   const cliente_id = req.params.id;
 
-  if (!nome || !email || !cpf) {
-    return res.status(400).json("Os campos nome, email e cpf são obrigatórios");
-  }
-
   try {
-    const emailExiste = await knex("clientes")
-      .where({ email })
-      .whereNot("id", cliente_id)
-      .first();
+    const emailExiste = await verificarEmailExistente(email, cliente_id);
 
     if (emailExiste) {
-      return res.status(400).json("O email já existe");
+      return res.status(400).json({ mensagem: "O email já existe" });
     }
 
-    const cpfExiste = await knex("clientes")
-      .where({ cpf })
-      .whereNot("id", cliente_id)
-      .first();
+    const cpfExiste = await verificarCpfExistente(cpf, cliente_id);
 
     if (cpfExiste) {
-      return res.status(400).json("O cpf já existe");
+      return res.status(400).json({ mensagem: "O cpf já existe" });
     }
 
     const clienteAtualizado = await knex("clientes")
@@ -70,18 +58,26 @@ const atualizarCliente = async (req, res) => {
         nome,
         email,
         cpf,
-      });
+      })
+      .returning(["id", "nome", "email", "cpf"]);
 
-    if (!clienteAtualizado) {
-      return res.status(404).json("Cliente não encontrado");
+    if (!clienteAtualizado || clienteAtualizado.length === 0) {
+      return res.status(404).json({ mensagem: "Cliente não encontrado" });
     }
 
-    return res.status(200).json("Cliente foi atualizado com sucesso.");
+    return res.status(200).json(clienteAtualizado[0]);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ mensagem: "Erro interno do servidor" });
   }
 };
+
+module.exports = {
+  cadastrarCliente,
+  atualizarCliente,
+  // outros métodos...
+};
+
 
 const listarClientes = async (req, res) => {
   try {
